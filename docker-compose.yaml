@@ -1,0 +1,47 @@
+version: '3.8'
+
+networks:
+  mynetwork:
+    driver: bridge
+    name: mynetwork
+    attachable: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.25.0.0/24
+          gateway: 172.25.0.1
+
+services:
+  infinispan-server:
+    image: infinispan/server:latest
+    environment:
+      - USER=admin
+      - PASS=password
+    ports:
+      - "11222:11222"
+    container_name: infinispan
+    networks:
+      mynetwork:
+        ipv4_address: 172.25.0.4
+  client-app:
+    image: quarkus/infinispan-client
+    environment:
+      - quarkus.infinispan-client.hosts=172.25.0.4:11222
+    ports:
+      - "8081:8081"
+    container_name: client
+    depends_on:
+      - infinispan-server
+    networks:
+      mynetwork:
+        ipv4_address: 172.25.0.5
+    command: >
+      /bin/sh -c "
+        echo Waiting for Infinispan service start ...;
+        while ! curl --silent --output /dev/null --fail-early --user 'admin:password' http://infinispan:11222/rest/v2/server;
+        do
+          sleep 1;
+        done;
+        echo Infinispan service started!;
+        ./application -Dquarkus.http.host=0.0.0.0 -Dquarkus.infinispan-client.hosts=infinispan:11222
+      "
