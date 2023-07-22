@@ -25,7 +25,7 @@ docker build --file src/main/docker/Dockerfile.jvm --tag quarkus/infinispan-clie
 ```
 5. Run docker-compose
 ```shell
-docker-copose up
+docker-compose up
 ```
 
 This is the  stack trace snippet after running docker-compose:
